@@ -834,50 +834,102 @@ int frmMain::bufferLength()
 
     return length;
 }
-void frmMain::handleOperation(QString command, QString command2,QString command3){
-    qDebug() << "Handle on command: " + command +" "+ command2+" "+command3;
-	
-    if(command == "Axis=3" && command2 =="Enc=1") emit ui->cmdZPlus->pressed(); else emit ui->cmdZPlus->released();
-    if(command == "Axis=3" && command2 == "Enc=-1") emit ui->cmdZMinus->pressed(); else emit ui->cmdZMinus->released();
-    if(command == "Axis=1" && command2 == "Enc=1") emit ui->cmdXMinus->pressed(); else emit ui->cmdXMinus->released();
-    if(command == "Axis=1" && command2 == "Enc=-1") emit ui->cmdXPlus->pressed(); else emit ui->cmdXPlus->released();
-    if(command == "Axis=2" && command2 == "Enc=1") emit ui->cmdYPlus->pressed(); else emit ui->cmdYPlus->released();
-    if(command == "Axis=2" && command2 =="Enc=-1") emit ui->cmdYMinus->pressed(); else emit ui->cmdYMinus->released();
+
+void frmMain::handleAxisSelection(int selectedAxis, int selectedEnc) {
+    static int previousAxis = 0;  // Prethodno izabrana osa
+
+    if (selectedAxis != previousAxis) {  
+        previousAxis = selectedAxis;  
+
+        if (selectedAxis == 1) {  
+            qDebug() << "Izabrana X osa";
+        } else if (selectedAxis == 2) {  
+            qDebug() << "Izabrana Y osa";
+        } else if (selectedAxis == 3) {  
+            qDebug() << "Izabrana Z osa";
+        } else {  
+            qDebug() << "Nije izabrana nijedna osa";
+        }
+    }
+
+    if (selectedAxis == 1) {  
+        if (selectedEnc == 1) {
+			emit ui->cmdXPlus->pressed();
+            qDebug() << "X osa se pomera u pozitivnom smeru";
+        } else if (selectedEnc == -1) {
+            emit ui->cmdXMinus->pressed();
+            qDebug() << "X osa se pomera u negativnom smeru";
+        } else{
+            emit ui->cmdXPlus->released();
+            emit ui->cmdXMinus->released();
+            qDebug() << "CNC se ne krece";
+        }
+    } else if (selectedAxis == 2) {  
+        if (selectedEnc == 1) {
+            emit ui->cmdYPlus->pressed();
+            qDebug() << "Y osa se pomera u pozitivnom smeru";
+        } else if (selectedEnc == -1) {
+            emit ui->cmdYMinus->pressed();
+            qDebug() << "Y osa se pomera u negativnom smeru";
+        } else {
+            emit ui->cmdYPlus->released();
+            emit ui->cmdYMinus->released();
+            qDebug() << "CNC se ne krece";
+        }
+    } else if (selectedAxis == 3) {  // Ako je izabrana Z osa
+        if (selectedEnc == 1) {
+            emit ui->cmdZPlus->pressed();
+            qDebug() << "Z osa se pomera u pozitivnom smeru";
+        } else if (selectedEnc == -1) {
+            emit ui->cmdZMinus->pressed();
+            qDebug() << "Z osa se pomera u negativnom smeru";
+        } else {
+            emit ui->cmdZPlus->released();
+            emit ui->cmdZMinus->released();
+            qDebug() << "CNC se ne krece";
+        }
+    }
 }
+
 
 void frmMain::onSerialPortReadyRead()
 {
-    while (m_serialPort.canReadLine()) {
-        QString data = m_serialPort.readLine().trimmed();
-	bool axisFlag = data.startsWith("Axis=");
-	bool encFlag = data.startsWith("Enc=");
-	bool stopFlag = data.startsWith("Stop=");
+	while (m_serialPort.canReadLine()) {
+	    QString data = m_serialPort.readLine().trimmed();
+		
+		bool axisFlag = data.startsWith("Axis=");
+		bool encFlag = data.startsWith("Enc=");
+		bool stopFlag = data.startsWith("Stop=");
 
-	if (axisFlag || encFlag || stopFlag) {
-	    QString command;
-	    QString command2;
-	    QString command3;
+		int axisIndex = data.indexOf("Axis=");
+		int encIndex = data.indexOf("Enc=");
+		int stopIndex = data.indexOf("Stop=");
 
-	    int axisIndex = data.indexOf("Axis=");
-	    int encIndex = data.indexOf("Enc=");
-	    int stopIndex = data.indexOf("Stop=");
 
-	    if (axisIndex != -1 && encIndex != -1) {
-		command = data.mid(axisIndex, encIndex - axisIndex).trimmed();
-		command2 = data.mid(encIndex).trimmed();
-		command2 = command2.remove("Axis=").trimmed();
-	    } else if (stopIndex != -1) {
-		command = data.mid(stopIndex).trimmed();
-		command3 = command.remove("Stop=").trimmed();
-	    }
+		QString command;
+		QString command2;
+		QString command3;
 
-	    handleOperation(command, command2, command3);
-	}
+		if (axisIndex != -1 && encIndex != -1) {
+			command = data.mid(axisIndex + 5, encIndex - axisIndex - 5).trimmed();
+			command2 = data.mid(encIndex + 4).trimmed().remove("Stop=").trimmed();
+
+			QStringList encValues = command2.split(" ");
+			int selectedAxis = command.toInt();
+			int selectedEnc = encValues.value(0).toInt();
+			qDebug()<< data;
+			handleAxisSelection(selectedAxis, selectedEnc);
+		} else if (stopIndex != -1) {
+			command = data.mid(stopIndex).trimmed();
+			command3 = command.remove("Stop=").trimmed();
+
+			// Obrada zaustavljanja
+		}
+
 
 
         // Filter prereset responses
         if (m_reseting) {
-            qDebug() << "reseting filter:" << data;
             if (!dataIsReset(data)) continue;
             else {
                 m_reseting = false;

@@ -91,7 +91,8 @@ private slots:
 
     void onSerialPortReadyRead();
     void onSerialPortError(QSerialPort::SerialPortError);
-    void handleOperation(QString command, QString command2,QString command3);
+    void handleAxisSelection(int selectedAxis, int selectedEnc);
+
     void onTimerConnection();
     void onTimerStateQuery();
     void onVisualizatorRotationChanged();
