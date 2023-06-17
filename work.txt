@@ -1,7 +1,13 @@
 
 CNC handle for GRBL control (Candle)
-- On change:
-	- Msg example: enc=-1 axis=3 rate=2 stop=0
-- SW: 
-
+		- enc + axis sw -> Jog: arrows
+		- jog sw -> Jog: step
+		- spindle sw -> Spindle: Speed
+		- mushroom -> Jog: stop
+	- Common:
+		- SW with 74LS166
+		- Mushroom
+	- On change:
+		- Msg example: enc=-1 axis=3 rate=2 stop=0
+		- Msg example: jog_up=1 stop=0
 
