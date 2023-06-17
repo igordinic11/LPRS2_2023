@@ -91,7 +91,7 @@ private slots:
 
     void onSerialPortReadyRead();
     void onSerialPortError(QSerialPort::SerialPortError);
-    void handleAxisSelection(int selectedAxis, int selectedEnc);
+    void handleAxisSelection(int selectedAxis, int selectedEnc,int selectStop,int selectStep);
 
     void onTimerConnection();
     void onTimerStateQuery();
